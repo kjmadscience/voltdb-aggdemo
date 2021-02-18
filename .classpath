@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="serverSrc"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="/Users/drolfe/Desktop/InstallsOfVolt/voltdb-ent-10.2/lib/kafka-avro-serializer-3.0.0.jar"/>
+	<classpathentry kind="lib" path="/Users/drolfe/Desktop/InstallsOfVolt/voltdb-ent-10.2/lib/kafka-clients-2.3.1.jar"/>
+	<classpathentry kind="lib" path="/Users/drolfe/Desktop/InstallsOfVolt/voltdb-ent-10.2/lib/kafka-schema-registry-client-5.3.2.jar"/>
+	<classpathentry kind="lib" path="/Users/drolfe/Desktop/InstallsOfVolt/voltdb-ent-10.2/lib/log4j-1.2.16.jar"/>
+	<classpathentry kind="lib" path="/Users/drolfe/Desktop/InstallsOfVolt/voltdb-ent-10.2/lib/slf4j-api-1.6.2.jar"/>
+	<classpathentry kind="lib" path="/Users/drolfe/Desktop/InstallsOfVolt/voltdb-ent-10.2/lib/slf4j-log4j12-1.6.2.jar"/>
+	<classpathentry kind="lib" path="/Users/drolfe/Desktop/InstallsOfVolt/voltdb-ent-10.2/voltdb/voltdb-10.2.jar"/>
+	<classpathentry kind="lib" path="/Users/drolfe/Desktop/InstallsOfVolt/voltdb-ent-10.2/voltdb/voltdbclient-10.2.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

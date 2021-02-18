@@ -1,0 +1,10 @@
+<topics enabled="true">
+ <profiles>
+ <profile name="daily">
+ <retention policy="time" limit="1dy"/>
+ </profile>
+ <profile name="weekly">
+ <retention policy="time" limit="1wk"/>
+ </profile>
+ </profiles>
+</topics>
