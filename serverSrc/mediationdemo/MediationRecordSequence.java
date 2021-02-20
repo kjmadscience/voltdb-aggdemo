@@ -92,10 +92,26 @@ public class MediationRecordSequence {
 
 	/**
 	 * Convert back to byte[] for storage.
-	 * @return BitSrt as byte[]
+	 * @return BitSet as byte[]
 	 */
 	public byte[] getSequence() {
 		return theBitSet.toByteArray();
+	}
+
+	@Override
+	public String toString() {
+		
+		StringBuffer allString = new StringBuffer(MediationSession.MAX_POSSIBLE_SEQNO+1);
+		
+		for (int i=0; i < theBitSet.length(); i++) {
+			if (getSeqno(i)) {
+				allString.append('X');
+			} else {
+				allString.append('_');
+			}
+		}
+				
+		return allString.toString();
 	}
 
 }

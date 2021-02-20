@@ -38,7 +38,6 @@ public abstract class AbstractMediationProcedure extends VoltProcedure {
 
 	public static final SQLStmt getParameter = new SQLStmt(
 			"SELECT parameter_value FROM mediation_parameters WHERE parameter_name = ? ;");
-
 		
 	public static final SQLStmt deleteSessionRunningTotals = new SQLStmt(
 				"DELETE FROM unaggregated_cdrs_by_session WHERE sessionId = ? AND sessionStartUTC = ?;");
@@ -69,13 +68,17 @@ public abstract class AbstractMediationProcedure extends VoltProcedure {
 						"(?,?,?,?,?,?,?,?,?,?,?); ");
 		
 	public static final SQLStmt updateAggStatus = new SQLStmt(
-				"UPDATE cdr_dupcheck SET last_agg_date = NOW, agg_state = ?, aggregated_usage = aggregated_usage + ? WHERE sessionId = ? AND sessionStartUTC = ?;");	
+				"UPDATE cdr_dupcheck SET last_agg_date = NOW, agg_state = ?"
+				+ ", aggregated_usage = aggregated_usage + ?"
+				+ ", unaggregated_usage = 0 "
+				+ "WHERE sessionId = ? AND sessionStartUTC = ?;");	
+	
 	// @formatter:on
 
 	protected static final long ONE_WEEK_IN_MS = 1000 * 60 * 60 * 24 * 7;
 
-	protected static final String AGG_THRESHOLD = "AGG_THRESHOLD";
-	protected static final String AGG_QTY = "AGG_QTY";
+	protected static final String AGG_USAGE = "AGG_USAGE";
+	protected static final String AGG_SEQNOCOUNT = "AGG_SEQNOCOUNT";
 	protected static final String STALENESS_THRESHOLD_MS = "STALENESS_THRESHOLD_MS";
 	protected static final String AGG_WINDOW_SIZE_MS = "AGG_WINDOW_SIZE_MS";
 	protected static final Object STALENESS_ROWLIMIT = "STALENESS_ROWLIMIT";

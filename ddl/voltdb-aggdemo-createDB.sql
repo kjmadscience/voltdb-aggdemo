@@ -3,6 +3,11 @@ LOAD CLASSES ../jars/voltdb-aggdemo.jar;
 
 file -inlinebatch END_OF_BATCH
 
+CREATE FUNCTION getHighestValidSequence FROM METHOD mediationdemo.MediationRecordSequenceObserver.getHighestValidSequence;
+
+CREATE FUNCTION sequenceToString FROM METHOD mediationdemo.MediationRecordSequenceObserver.getSeqnosAsText;
+
+
 CREATE TABLE mediation_parameters 
 (parameter_name varchar(30) not null primary key
 ,parameter_value bigint not null);
@@ -16,6 +21,7 @@ CREATE TABLE cdr_dupcheck
 	 agg_state varchar(10),
 	 last_agg_date timestamp ,
 	 aggregated_usage bigint default 0,
+	 unaggregated_usage bigint default 0,
 	 primary key (sessionId,sessionStartUTC)
 )
 USING TTL 25 HOURS ON COLUMN insert_date BATCH_SIZE 50000;
@@ -36,8 +42,12 @@ SELECT truncate(MINUTE, sessionStartUTC) sessionStartUTC, agg_state, count(*) ho
 FROM cdr_dupcheck
 GROUP BY  truncate(MINUTE, sessionStartUTC) , agg_state;
 
-
 CREATE INDEX cdssm_ix1 ON cdr_dupcheck_session_summary_minute (sessionStartUTC);
+
+CREATE VIEW total_unaggregated_usage AS 
+SELECT sum(unaggregated_usage) unaggregated_usage
+FROM cdr_dupcheck;
+
 
 CREATE STREAM bad_cdrs  PARTITION ON COLUMN sessionId 
 (	 reason varchar(10) not null,
@@ -88,6 +98,7 @@ CREATE INDEX ucbs_ix1 ON unaggregated_cdrs_by_session
 
 
 
+
 CREATE STREAM aggregated_cdrs 
 PARTITION ON COLUMN sessionId
 (	 reason varchar(10) not null,
@@ -105,6 +116,12 @@ PARTITION ON COLUMN sessionId
 CREATE TOPIC USING STREAM aggregated_cdrs PROFILE daily;
 
 
+DROP PROCEDURE GetBySessionId IF EXISTS;
+
+CREATE PROCEDURE  
+   PARTITION ON TABLE cdr_dupcheck COLUMN sessionid
+   FROM CLASS mediationdemo.GetBySessionId;  
+   
 DROP PROCEDURE HandleMediationCDR IF EXISTS;
 
 CREATE PROCEDURE  
@@ -127,38 +144,104 @@ CREATE TOPIC incoming_cdrs EXECUTE PROCEDURE HandleMediationCDR  PROFILE daily;
 
 CREATE PROCEDURE ShowAggStatus__promBL AS
 BEGIN
-select 'mediation_agg_state_unaggregated' statname
-     ,  'mediation_agg_state_unaggregated' stathelp  
+select 'mediation_agg_state_unaggregated_sessions' statname
+     ,  'mediation_agg_state_unaggregated_sessions' stathelp  
      , how_many statvalue 
 from cdr_dupcheck_agg_summary_minute where last_agg_date IS null;
-select 'mediation_agg_state_'||agg_state||'_qty_0min' statname
-     ,  'mediation_agg_state_'||agg_state||'_qty_0min' stathelp  
-     , how_many statvalue 
-from cdr_dupcheck_agg_summary_minute where last_agg_date = truncate(minute,NOW);
-select 'mediation_agg_state_'||agg_state||'_usage_0min' statname
-     ,  'mediation_agg_state_'||agg_state||'_usage_0min' stathelp  
-     , aggregated_usage statvalue 
-from cdr_dupcheck_agg_summary_minute where last_agg_date = truncate(minute, NOW);
-select 'mediation_agg_state_'||agg_state||'_qty_1min' statname
-     ,  'mediation_agg_state_'||agg_state||'_qty_1min' stathelp  
-     , how_many statvalue 
-from cdr_dupcheck_agg_summary_minute where last_agg_date = truncate(minute, DATEADD(MINUTE, -1, NOW));
-select 'mediation_agg_state_'||agg_state||'_usage_1min' statname
-     ,  'mediation_agg_state_'||agg_state||'_usage_1min' stathelp  
-     , aggregated_usage statvalue 
-from cdr_dupcheck_agg_summary_minute where last_agg_date = truncate(minute, DATEADD(MINUTE, -1, NOW));
-select 'mediation_agg_state_'||agg_state||'_qty_6min' statname
-     ,  'mediation_agg_state_'||agg_state||'_qty_6min' stathelp  
-     , how_many statvalue 
-from cdr_dupcheck_agg_summary_minute where last_agg_date = truncate(minute, DATEADD(MINUTE, -6, NOW));
-select 'mediation_agg_state_'||agg_state||'_usage_6min' statname
-     ,  'mediation_agg_state_'||agg_state||'_usage_6min' stathelp  
-     , aggregated_usage statvalue 
-from cdr_dupcheck_agg_summary_minute where last_agg_date = truncate(minute, DATEADD(MINUTE, -6, NOW));
+
+select 'mediation_agg_state_unaggregated_usage' statname
+     ,  'mediation_agg_state_unaggregated_usage' stathelp  
+     , unaggregated_usage statvalue 
+from total_unaggregated_usage;
+
+select 'mediation_agg_state_end_qty_1min' statname
+     ,  'mediation_agg_state_end_qty_1min' stathelp  
+     , decode(sum(how_many),null,0,sum(how_many))  statvalue 
+from cdr_dupcheck_agg_summary_minute 
+where last_agg_date = truncate(minute, DATEADD(MINUTE, -1, NOW))
+and agg_state  = 'END';
+select 'mediation_agg_state_end_usage_1min' statname
+     ,  'mediation_agg_state_end_usage_1min' stathelp  
+     , sum(aggregated_usage)  statvalue 
+from cdr_dupcheck_agg_summary_minute 
+where last_agg_date = truncate(minute, DATEADD(MINUTE, -1, NOW))
+and agg_state  = 'END';
+
+select 'mediation_agg_state_usage_qty_1min' statname
+     ,  'mediation_agg_state_usage_qty_1min' stathelp  
+     , decode(sum(how_many),null,0,sum(how_many))  statvalue 
+from cdr_dupcheck_agg_summary_minute 
+where last_agg_date = truncate(minute, DATEADD(MINUTE, -1, NOW))
+and agg_state  = 'USAGE';
+select 'mediation_agg_state_usage_usage_1min' statname
+     ,  'mediation_agg_state_usage_usage_1min' stathelp  
+     , sum(aggregated_usage) statvalue 
+from cdr_dupcheck_agg_summary_minute 
+where last_agg_date = truncate(minute, DATEADD(MINUTE, -1, NOW))
+and agg_state  = 'USAGE';
+
+select 'mediation_agg_state_late_qty_1min' statname
+     ,  'mediation_agg_state_late_qty_1min' stathelp  
+     , decode(sum(how_many),null,0,sum(how_many))  statvalue 
+from cdr_dupcheck_agg_summary_minute 
+where last_agg_date = truncate(minute, DATEADD(MINUTE, -1, NOW))
+and agg_state  = 'LATE';
+select 'mediation_agg_state_late_usage_1min' statname
+     ,  'mediation_agg_state_late_usage_1min' stathelp  
+     , sum(aggregated_usage)  statvalue 
+from cdr_dupcheck_agg_summary_minute 
+where last_agg_date = truncate(minute, DATEADD(MINUTE, -1, NOW))
+and agg_state  = 'LATE';
+
+select 'mediation_agg_state_age_qty_1min' statname
+     ,  'mediation_agg_state_age_qty_1min' stathelp  
+     , decode(sum(how_many),null,0,sum(how_many))  statvalue 
+from cdr_dupcheck_agg_summary_minute 
+where last_agg_date = truncate(minute, DATEADD(MINUTE, -1, NOW))
+and agg_state  = 'AGE';
+select 'mediation_agg_state_age_usage_1min' statname
+     ,  'mediation_agg_state_age_usage_1min' stathelp  
+     , sum(aggregated_usage)  statvalue 
+from cdr_dupcheck_agg_summary_minute 
+where last_agg_date = truncate(minute, DATEADD(MINUTE, -1, NOW))
+and agg_state  = 'AGE';
+
+select 'mediation_agg_state_qty_qty_1min' statname
+     ,  'mediation_agg_state_qty_qty_1min' stathelp  
+     , decode(sum(how_many),null,0,sum(how_many))  statvalue 
+from cdr_dupcheck_agg_summary_minute 
+where last_agg_date = truncate(minute, DATEADD(MINUTE, -1, NOW))
+and agg_state  = 'QTY';
+select 'mediation_agg_state_qty_usage_1min' statname
+     ,  'mediation_agg_state_qty_usage_1min' stathelp  
+     , sum(aggregated_usage)  statvalue 
+from cdr_dupcheck_agg_summary_minute 
+where last_agg_date = truncate(minute, DATEADD(MINUTE, -1, NOW))
+and agg_state  = 'QTY';
+
+
+select 'mediation_agg_state_end_qty_1min' statname
+     ,  'mediation_agg_state_end_qty_1min' stathelp  
+     , decode(sum(how_many),null,0,sum(how_many))  statvalue 
+from cdr_dupcheck_agg_summary_minute 
+where last_agg_date = truncate(minute, DATEADD(MINUTE, -1, NOW))
+and agg_state  = 'END';
+select 'mediation_agg_state_end_usage_1min' statname
+     ,  'mediation_agg_state_end_usage_1min' stathelp  
+     , sum(aggregated_usage)  statvalue 
+from cdr_dupcheck_agg_summary_minute 
+where last_agg_date = truncate(minute, DATEADD(MINUTE, -1, NOW))
+and agg_state  = 'END';
+
 select 'mediation_parameter_'||parameter_name statname
      ,  'mediation_parameter_'||parameter_name stathelp  
      , parameter_value statvalue 
 from mediation_parameters order by parameter_name;
+
+SELECT 'current_agg_lag_ms' statname, 'current_agg_lag_ms' stathelp,
+since_epoch(Millisecond, now) - since_epoch(Millisecond,min_recordStartUTC) statvalue
+FROM unaggregated_cdrs_by_session ORDER BY min_recordStartUTC LIMIT 1;
+
 END;
 
 END_OF_BATCH
@@ -168,17 +251,17 @@ END_OF_BATCH
 upsert into mediation_parameters
 (parameter_name ,parameter_value)
 VALUES
-('AGG_THRESHOLD',50);
+('AGG_USAGE',1000000000);
 
 upsert into mediation_parameters
 (parameter_name ,parameter_value)
 VALUES
-('AGG_QTY',100000);
+('AGG_SEQNOCOUNT',300);
 
 upsert into mediation_parameters
 (parameter_name ,parameter_value)
 VALUES
-('STALENESS_THRESHOLD_MS',300000);
+('STALENESS_THRESHOLD_MS',3600000);
 
 upsert into mediation_parameters
 (parameter_name ,parameter_value)
