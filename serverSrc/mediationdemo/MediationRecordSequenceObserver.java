@@ -1,7 +1,5 @@
 package mediationdemo;
 
-import org.voltdb.aggdemo.MediationSession;
-
 /* This file is part of VoltDB.
  * Copyright (C) 2008-2021 VoltDB Inc.
  *

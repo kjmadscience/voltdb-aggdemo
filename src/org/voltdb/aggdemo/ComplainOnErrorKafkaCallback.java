@@ -37,7 +37,7 @@ public class ComplainOnErrorKafkaCallback implements org.apache.kafka.clients.pr
 	@Override
 	public void onCompletion(RecordMetadata metadata, java.lang.Exception exception) {
 		if (exception != null) {
-			MediationDataGenerator.msg(exception.getMessage());
+			MediationDataGenerator.msg("ComplainOnErrorKafkaCallback:" + exception.getMessage());
 		}
 		
 	}

@@ -107,6 +107,7 @@ public class MediationDataGenerator {
 				+ dateis1970Ratio);
 
 		msg("Log into VoltDB's Kafka Broker");
+		
 		producer = connectToKafka(hostnames, "org.apache.kafka.common.serialization.LongSerializer",
 				"org.voltdb.aggdemo.MediationMessageSerializer");
 
