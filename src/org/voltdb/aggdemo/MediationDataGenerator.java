@@ -130,20 +130,6 @@ public class MediationDataGenerator {
 
 			recordCount++;
 
-			if (laststatstime + 10000 < System.currentTimeMillis()) {
-
-				double recordsProcessed = recordCount - lastReportedRecordCount;
-				double tps = 1000 * (recordsProcessed / (System.currentTimeMillis() - laststatstime));
-
-				msg("Offset = " + offset +  " Record " + recordCount + " TPS=" + (long) tps);
-				msg("Active Sessions: " + sessionMap.size());
-
-				laststatstime = System.currentTimeMillis();
-				lastReportedRecordCount = recordCount;
-
-				printApplicationStats(voltClient);
-			}
-
 			String randomCallingNumber = "Num" + (r.nextInt(userCount) + offset);
 
 			MediationSession ourSession = sessionMap.get(randomCallingNumber);
@@ -211,6 +197,22 @@ public class MediationDataGenerator {
 				sendRemainingMessages();
 			}
 
+			
+			if (laststatstime + 10000 < System.currentTimeMillis()) {
+
+				double recordsProcessed = recordCount - lastReportedRecordCount;
+				double tps = 1000 * (recordsProcessed / (System.currentTimeMillis() - laststatstime));
+
+				msg("Offset = " + offset +  " Record " + recordCount + " TPS=" + (long) tps);
+				msg("Active Sessions: " + sessionMap.size());
+
+				laststatstime = System.currentTimeMillis();
+				lastReportedRecordCount = recordCount;
+
+				printApplicationStats(voltClient,nextCdr);
+			}
+
+			
 		}
 
 		sendRemainingMessages();
@@ -466,8 +468,9 @@ public class MediationDataGenerator {
 	 * Check VoltDB to see how things are going...
 	 * 
 	 * @param client
+	 * @param nextCdr 
 	 */
-	public static void printApplicationStats(Client client) {
+	public static void printApplicationStats(Client client, MediationMessage nextCdr) {
 		try {
 
 			msg("");
@@ -486,7 +489,7 @@ public class MediationDataGenerator {
 
 			}
 
-			cr = client.callProcedure("@Statistics", "TOPIC", 0);
+			cr = client.callProcedure("GetBySessionId", nextCdr.getSessionId(), new Date(nextCdr.getSessionStartUTC()));
 
 			if (cr.getStatus() == ClientResponse.SUCCESS) {
 				VoltTable[] resultsTables = cr.getResults();
