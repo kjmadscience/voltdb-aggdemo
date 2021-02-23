@@ -151,7 +151,7 @@ from cdr_dupcheck_agg_summary_minute where last_agg_date IS null;
 
 select 'mediation_agg_state_unaggregated_usage' statname
      ,  'mediation_agg_state_unaggregated_usage' stathelp  
-     , unaggregated_usage statvalue 
+     , nvl(UNAGGREGATED_USAGE,0)  statvalue 
 from total_unaggregated_usage;
 
 select 'mediation_agg_state_end_qty_1min' statname
@@ -160,9 +160,10 @@ select 'mediation_agg_state_end_qty_1min' statname
 from cdr_dupcheck_agg_summary_minute 
 where last_agg_date = truncate(minute, DATEADD(MINUTE, -1, NOW))
 and agg_state  = 'END';
+
 select 'mediation_agg_state_end_usage_1min' statname
      ,  'mediation_agg_state_end_usage_1min' stathelp  
-     , sum(aggregated_usage)  statvalue 
+     , nvl(sum(aggregated_usage),0)  statvalue 
 from cdr_dupcheck_agg_summary_minute 
 where last_agg_date = truncate(minute, DATEADD(MINUTE, -1, NOW))
 and agg_state  = 'END';
@@ -173,9 +174,10 @@ select 'mediation_agg_state_usage_qty_1min' statname
 from cdr_dupcheck_agg_summary_minute 
 where last_agg_date = truncate(minute, DATEADD(MINUTE, -1, NOW))
 and agg_state  = 'USAGE';
+
 select 'mediation_agg_state_usage_usage_1min' statname
      ,  'mediation_agg_state_usage_usage_1min' stathelp  
-     , sum(aggregated_usage) statvalue 
+     , nvl(sum(aggregated_usage),0) statvalue 
 from cdr_dupcheck_agg_summary_minute 
 where last_agg_date = truncate(minute, DATEADD(MINUTE, -1, NOW))
 and agg_state  = 'USAGE';
@@ -186,9 +188,10 @@ select 'mediation_agg_state_late_qty_1min' statname
 from cdr_dupcheck_agg_summary_minute 
 where last_agg_date = truncate(minute, DATEADD(MINUTE, -1, NOW))
 and agg_state  = 'LATE';
+
 select 'mediation_agg_state_late_usage_1min' statname
      ,  'mediation_agg_state_late_usage_1min' stathelp  
-     , sum(aggregated_usage)  statvalue 
+     , nvl(sum(aggregated_usage),0)  statvalue 
 from cdr_dupcheck_agg_summary_minute 
 where last_agg_date = truncate(minute, DATEADD(MINUTE, -1, NOW))
 and agg_state  = 'LATE';
@@ -199,9 +202,10 @@ select 'mediation_agg_state_age_qty_1min' statname
 from cdr_dupcheck_agg_summary_minute 
 where last_agg_date = truncate(minute, DATEADD(MINUTE, -1, NOW))
 and agg_state  = 'AGE';
+
 select 'mediation_agg_state_age_usage_1min' statname
      ,  'mediation_agg_state_age_usage_1min' stathelp  
-     , sum(aggregated_usage)  statvalue 
+     , nvl(sum(aggregated_usage),0)  statvalue 
 from cdr_dupcheck_agg_summary_minute 
 where last_agg_date = truncate(minute, DATEADD(MINUTE, -1, NOW))
 and agg_state  = 'AGE';
@@ -212,9 +216,10 @@ select 'mediation_agg_state_qty_qty_1min' statname
 from cdr_dupcheck_agg_summary_minute 
 where last_agg_date = truncate(minute, DATEADD(MINUTE, -1, NOW))
 and agg_state  = 'QTY';
+
 select 'mediation_agg_state_qty_usage_1min' statname
      ,  'mediation_agg_state_qty_usage_1min' stathelp  
-     , sum(aggregated_usage)  statvalue 
+     , nvl(sum(aggregated_usage),0)  statvalue 
 from cdr_dupcheck_agg_summary_minute 
 where last_agg_date = truncate(minute, DATEADD(MINUTE, -1, NOW))
 and agg_state  = 'QTY';
@@ -226,9 +231,10 @@ select 'mediation_agg_state_end_qty_1min' statname
 from cdr_dupcheck_agg_summary_minute 
 where last_agg_date = truncate(minute, DATEADD(MINUTE, -1, NOW))
 and agg_state  = 'END';
+
 select 'mediation_agg_state_end_usage_1min' statname
      ,  'mediation_agg_state_end_usage_1min' stathelp  
-     , sum(aggregated_usage)  statvalue 
+     , nvl(sum(aggregated_usage),0)  statvalue 
 from cdr_dupcheck_agg_summary_minute 
 where last_agg_date = truncate(minute, DATEADD(MINUTE, -1, NOW))
 and agg_state  = 'END';
