@@ -31,16 +31,3 @@ sessionId + sessionStartUTC + seqno are the 'Primary Key' of the record we recei
 
 When a session's seqno gets to 255 it will be ended and will then start again. As a consequence a session can run more or less forever.
 
-
-## Our Aggregation requirements
-
-We need to be able to support 50,000 records as second.
-We process all records we receive that are up to 7 days old.
-Under no circumstances do we process a duplicate record.
-Under no circumstances do we process a complete session with a missing record. such sessions are reported after one hour of inactivity.
-We cut output records when the session ends or when we've seen more than 1,000,000 bytes of usage.
-
-
-
-
-
