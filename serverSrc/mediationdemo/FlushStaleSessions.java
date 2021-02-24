@@ -38,7 +38,7 @@ import org.voltdb.types.TimestampType;
  */
 public class FlushStaleSessions extends AbstractMediationProcedure {
 
-	// @formatter:off
+    // @formatter:off
 
 	public static final SQLStmt getOldestUnfinishedSession = new SQLStmt(
 			"SELECT min_recordStartUTC FROM unaggregated_cdrs_by_session ORDER BY min_recordStartUTC LIMIT 1;");
@@ -50,81 +50,82 @@ public class FlushStaleSessions extends AbstractMediationProcedure {
 
 	// @formatter:on
 
-	long stalenessThresholdMs = 300000;
-	long aggWindowSizeMs = 2000;
-	int rowLimit = 1000;
+    long stalenessThresholdMs = 300000;
+    long aggWindowSizeMs = 2000;
+    int rowLimit = 1000;
 
-	public VoltTable[] run() throws VoltAbortException {
+    public VoltTable[] run() throws VoltAbortException {
 
-		// find oldest unaggregated session
-		voltQueueSQL(getOldestUnfinishedSession);
+        // find oldest unaggregated session
+        voltQueueSQL(getOldestUnfinishedSession);
 
-		// Find parameters...
-		voltQueueSQL(getParameter, STALENESS_THRESHOLD_MS);
-		voltQueueSQL(getParameter, AGG_WINDOW_SIZE_MS);
-		voltQueueSQL(getParameter, STALENESS_ROWLIMIT);
+        // Find parameters...
+        voltQueueSQL(getParameter, STALENESS_THRESHOLD_MS);
+        voltQueueSQL(getParameter, AGG_WINDOW_SIZE_MS);
+        voltQueueSQL(getParameter, STALENESS_ROWLIMIT);
 
-		VoltTable[] queryResults = voltExecuteSQL();
-		VoltTable oldestSessionDateTable = queryResults[0];
-		VoltTable stalenessThresholdMsTable = queryResults[1];
-		VoltTable aggWindowSizeMsTable = queryResults[2];
-		VoltTable rowLimitTable = queryResults[3];
+        VoltTable[] queryResults = voltExecuteSQL();
+        VoltTable oldestSessionDateTable = queryResults[0];
+        VoltTable stalenessThresholdMsTable = queryResults[1];
+        VoltTable aggWindowSizeMsTable = queryResults[2];
+        VoltTable rowLimitTable = queryResults[3];
 
-		// Sessions have to be at LEAST stalenessThresholdMs stale before we cancel
-		// them..
-		stalenessThresholdMs = getParameterIfSet(stalenessThresholdMsTable, stalenessThresholdMs);
+        // Sessions have to be at LEAST stalenessThresholdMs stale before we cancel
+        // them..
+        stalenessThresholdMs = getParameterIfSet(stalenessThresholdMsTable, stalenessThresholdMs);
 
-		// When we cancel records we use a window aggWindowSizeMs in size...
-		aggWindowSizeMs = getParameterIfSet(aggWindowSizeMsTable, aggWindowSizeMs);
+        // When we cancel records we use a window aggWindowSizeMs in size...
+        aggWindowSizeMs = getParameterIfSet(aggWindowSizeMsTable, aggWindowSizeMs);
 
-		// See how many rows we do in one pass. More isn't always better...
-		rowLimit = (int) getParameterIfSet(rowLimitTable, rowLimit);
+        // See how many rows we do in one pass. More isn't always better...
+        rowLimit = (int) getParameterIfSet(rowLimitTable, rowLimit);
 
-		// Do not mess with records that were changed less than stalenessThresholdMs
-		// ago...
-		final Date cutoffDate = new Date(this.getTransactionTime().getTime() - stalenessThresholdMs);
+        // Do not mess with records that were changed less than stalenessThresholdMs
+        // ago...
+        final Date cutoffDate = new Date(this.getTransactionTime().getTime() - stalenessThresholdMs);
 
-		if (oldestSessionDateTable.advanceRow()) {
+        if (oldestSessionDateTable.advanceRow()) {
 
-			final TimestampType oldestSessionDate = oldestSessionDateTable
-					.getTimestampAsTimestamp("min_recordStartUTC");
+            final TimestampType oldestSessionDate = oldestSessionDateTable
+                    .getTimestampAsTimestamp("min_recordStartUTC");
 
-			// if we can find at least one old session and it's old enough to cancel...
-			if (oldestSessionDate != null && oldestSessionDate.asExactJavaDate().before(cutoffDate)) {
+            // if we can find at least one old session and it's old enough to cancel...
+            if (oldestSessionDate != null && oldestSessionDate.asExactJavaDate().before(cutoffDate)) {
 
-				// figure out time period we'll check this pass, and make sure it isn't too
-				// big...
-				Date aggWindowCloseDate = new Date(oldestSessionDate.asExactJavaDate().getTime() + aggWindowSizeMs);
+                // figure out time period we'll check this pass, and make sure it isn't too
+                // big...
+                Date aggWindowCloseDate = new Date(oldestSessionDate.asExactJavaDate().getTime() + aggWindowSizeMs);
 
-				if (aggWindowCloseDate.after(cutoffDate)) {
-					aggWindowCloseDate = cutoffDate;
-				}
+                if (aggWindowCloseDate.after(cutoffDate)) {
+                    aggWindowCloseDate = cutoffDate;
+                }
 
-				// Find our sessions to cancel...
-				
-				voltQueueSQL(getSessionRunningTotals, oldestSessionDate, aggWindowCloseDate,rowLimit);
-				VoltTable sessionsToClose = voltExecuteSQL()[0];
-				System.out.println(oldestSessionDate.toString() + " " +aggWindowCloseDate.toGMTString() + " " + sessionsToClose.getRowCount());
-				// For each session...
-				while (sessionsToClose.advanceRow()) {
+                // Find our sessions to cancel...
 
-					// See how many CDRS are missing.
-					long missingCdrCount = sessionsToClose.getLong("missingCdrCount");
+                voltQueueSQL(getSessionRunningTotals, oldestSessionDate, aggWindowCloseDate, rowLimit);
+                VoltTable sessionsToClose = voltExecuteSQL()[0];
+                System.out.println(oldestSessionDate.toString() + " " + aggWindowCloseDate.toGMTString() + " "
+                        + sessionsToClose.getRowCount());
+                // For each session...
+                while (sessionsToClose.advanceRow()) {
 
-					// If none are missing it means an intermediate turned up and
-					// completed the set *after* the end record. Declare victory and
-					// aggregate. If not, cancel the session.
-					if (missingCdrCount == 0) {
-						aggregateSession(sessionsToClose, "AGE");
-					} else {
-						cancelLateSession(sessionsToClose);
-					}
-				}
+                    // See how many CDRS are missing.
+                    long missingCdrCount = sessionsToClose.getLong("missingCdrCount");
 
-			}
-		}
-		return voltExecuteSQL(true);
+                    // If none are missing it means an intermediate turned up and
+                    // completed the set *after* the end record. Declare victory and
+                    // aggregate. If not, cancel the session.
+                    if (missingCdrCount == 0) {
+                        aggregateSession(sessionsToClose, "AGE");
+                    } else {
+                        cancelLateSession(sessionsToClose);
+                    }
+                }
 
-	}
+            }
+        }
+        return voltExecuteSQL(true);
+
+    }
 
 }
