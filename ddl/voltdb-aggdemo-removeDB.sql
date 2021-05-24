@@ -1,11 +1,5 @@
 
 
-DROP TOPIC incoming_cdrs IF EXISTS;
-
-DROP TOPIC bad_cdrs IF EXISTS;
-
-DROP TOPIC aggregated_cdrs IF EXISTS;
-
 DROP TASK FlushStaleSessionsTask IF EXISTS;
 
 DROP PROCEDURE GetBySessionId IF EXISTS; 
