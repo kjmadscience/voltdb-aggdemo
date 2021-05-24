@@ -7,7 +7,6 @@ CREATE FUNCTION getHighestValidSequence FROM METHOD mediationdemo.MediationRecor
 
 CREATE FUNCTION sequenceToString FROM METHOD mediationdemo.MediationRecordSequenceObserver.getSeqnosAsText;
 
-
 CREATE TABLE mediation_parameters 
 (parameter_name varchar(30) not null primary key
 ,parameter_value bigint not null);
@@ -49,7 +48,10 @@ SELECT sum(unaggregated_usage) unaggregated_usage
 FROM cdr_dupcheck;
 
 
-CREATE STREAM bad_cdrs  PARTITION ON COLUMN sessionId 
+CREATE STREAM bad_cdrs  
+EXPORT TO TOPIC bad_cdrs 
+WITH KEY (sessionId)
+PARTITION ON COLUMN sessionId 
 (	 reason varchar(10) not null,
      sessionId bigint not null,
 	 sessionStartUTC timestamp not null,
@@ -63,10 +65,11 @@ CREATE STREAM bad_cdrs  PARTITION ON COLUMN sessionId
 	 recordUsage bigint not null
 );
 
-CREATE TOPIC USING STREAM bad_cdrs PROFILE daily;
 
-
-CREATE STREAM unaggregated_cdrs PARTITION ON COLUMN sessionId 
+CREATE STREAM unaggregated_cdrs
+EXPORT TO TOPIC unaggregated_cdrs 
+WITH KEY (sessionId) 
+PARTITION ON COLUMN sessionId 
 (	 sessionId bigint not null,
 	 sessionStartUTC timestamp not null,
 	 seqno bigint not null,
@@ -76,8 +79,6 @@ CREATE STREAM unaggregated_cdrs PARTITION ON COLUMN sessionId
 	 recordStartUTC timestamp not null,
 	 recordUsage bigint not null,
 );
-
-
 
 
 CREATE VIEW unaggregated_cdrs_by_session AS
@@ -96,10 +97,9 @@ GROUP BY sessionId, sessionStartUTC;
 CREATE INDEX ucbs_ix1 ON unaggregated_cdrs_by_session
 (min_recordStartUTC, sessionId, sessionStartUTC);
 
-
-
-
 CREATE STREAM aggregated_cdrs 
+EXPORT TO TOPIC aggregated_cdrs 
+WITH KEY (sessionId) 
 PARTITION ON COLUMN sessionId
 (	 reason varchar(10) not null,
      sessionId bigint not null,
@@ -112,9 +112,6 @@ PARTITION ON COLUMN sessionId
 	 endAggTimeUTC timestamp not null,
 	 recordUsage bigint not null
 );
-
-CREATE TOPIC USING STREAM aggregated_cdrs PROFILE daily;
-
 
 DROP PROCEDURE GetBySessionId IF EXISTS;
 
@@ -140,7 +137,7 @@ ON ERROR LOG
 RUN ON PARTITIONS;
    
 
-CREATE TOPIC incoming_cdrs EXECUTE PROCEDURE HandleMediationCDR  PROFILE daily;
+--CREATE TOPIC incoming_cdrs EXECUTE PROCEDURE HandleMediationCDR  PROFILE daily;
 
 CREATE PROCEDURE ShowAggStatus__promBL AS
 BEGIN
