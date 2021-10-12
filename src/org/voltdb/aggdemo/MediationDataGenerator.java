@@ -345,7 +345,8 @@ public class MediationDataGenerator {
 	public static void main(String[] args) throws Exception {
 
 		if (args.length != 9) {
-			msg("Usage: MediationDataGenerator hostnames userCount tpMs durationSeconds missingRatio dupRatio lateRatio dateis1970Ratio offset");
+            msg("Usage: MediationDataGenerator hostnames userCount tpMs durationSeconds missingRatio dupRatio lateRatio dateis1970Ratio offset");
+            msg("where missingRatio, dupRatio, lateRatio and dateis1970Ratio are '1 in' ratios - i.e. 100 means 1%");
 			System.exit(1);
 		}
 
