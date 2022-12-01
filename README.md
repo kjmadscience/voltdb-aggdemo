@@ -199,4 +199,5 @@ It takes the following parameters:
 |offset|Number to add to session id’s, which normally start at zero. Used when we want to run multiple copies of the generator at the same time.|0|
 
 An example usage would be:
+
 ````java -jar voltdb-aggdemo-client.jar vdb1,vdb2,vdb3 100000 80 1200 -1 -1 -1 -1 0````
