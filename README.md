@@ -139,8 +139,7 @@ billions of records a day, so 1 in a billion events happen every couple of hours
 * Under no circumstances do we process a duplicate record.
 * Under no circumstances do we process a complete session with a missing record. Such sessions are reported.
 * Records or sessions that we hear about that are more than 7 days old are rejected.
-* Event based Aggregation: We cut output records when the session ends or when we’ve seen more than
-* 1,000,000 bytes of usage.
+* Event based Aggregation: We cut output records when the session ends or when we’ve seen more than 1,000,000 bytes of usage.
 * Time based Aggregation: We cut output records when we haven’t seen traffic for a while.
 * Duplicates and other malformed records we receive are output to a separate queue.
 
@@ -152,4 +151,31 @@ billions of records a day, so 1 in a billion events happen every couple of hours
 * The output consists of 2 kafka streams aggregated_cdrs and bad_cdrs.
 * Users can also inspect a session status in real time by calling the stored procedure GetBySessionId.
 
-
+# HIGH VOLUMES
+Volt Active Data has a proven track record in asynchronously handling high volume streams of individual events.
+# DUPLICATE DETECTION
+In a traditional solution we would solve the dup check requirement by storing a single dup checking
+record for every row we receive. Given that we have to keep records for 7 days this is wasteful of storage.
+We also notice that the seqno component of the key is an ascending sequential integer between 0 and 255.
+We therefore create a table called ‘cdr_dupcheck’. Where the primary key is that of the session as a whole
+(SessionId + sessionStartUTC), and then add a 32 byte array of binary data, with each bit representing a
+seqno. This means we can use a single record to check for uniqueness for all 256 possible seqnos in a session.
+# EVENT BASED AGGREGATION
+As each CDR arrives we update our running totals and decide whether we need to output a record because the
+session has finished, we’ve seen too many intermediate records or because the total recorded usage needs to
+be sent downstream.
+# TIME BASED AGGREGATION
+We have a scheduled task that runs on all of Volt Active Data’s partitions and will aggregate or error out
+sessions that are inactive or broken.
+# TIME BASED SANITY CHECKING
+Our demo rejects records that are more than 1 week old
+# HOW OUR TEST DATA GENERATOR WORKS
+Our goal is to pretend to be a large number of separate device sessions, each of which is stepping its way
+through the “Start-Intermediate-End” lifecycle. The code we use to do this can be seen here.
+It works by creating a Java HashMap of MediationSession objects, each of which, as the name suggests,
+represents a session. It then picks random session Ids and either creates a new session if one doesn’t exist, or
+advances the state of the session if it does. The message is then sent to Volt Active Data via Kafka. This means
+that sessions progress at different rates, and initially you won’t see any output, until a session finishes or has
+some other reason for producing output.
+Note that depending on how many sessions you are emulating you may run low on RAM on your test
+generation server.
