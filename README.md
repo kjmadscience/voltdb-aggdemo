@@ -94,3 +94,30 @@ but that means that anyone using the sandbox needs to know Kubernetes. For simpl
 
 The sandbox includes a Grafana dashboard that allows you see what’s going on from an Operating System,
 Database and Business perspective.
+
+# MEDIATION
+
+This sandbox shows how Volt Active Data can be used to aggregate high volume streaming events. There
+are numerous situations in Telco, the IoT, and other areas where we need to do this at scale.
+This example is based on the author’s experience writing code to handle billions of records in the Telco
+industry. While it’s simplistic, the challenges it deals with are all real ones that have been seen in the field.
+In this case we are receiving a firehose of records and turning them into a quality, consolidated feed.
+Each record describes internet usage for a subscriber’s session as they use the web.
+
+The record structure looks like this:
+
+
+|FIELD|PURPOSE|EXAMPLE|
+|---|---|---|
+|SessionId| Unique Id from equipment generating data. Resets when device is restarted after an outage.| 456|
+
+
+sessionStartUTC Start time of session in UTC. SessionId + session
+StartUTC identifies a session. Adding Seqno makes it unique 2-Feb-21 03:46:34 GMT
+callingNumber The user who is doing the work 555-1212
+Seqno An ascending gap free integer between 0 and 255 37
+recordType There will be one ‘S’ (Start), more than one ‘I’ (intermediate)
+and one ‘E’ (end). S
+recordStartUTC Generation time of record in UTC. 2-Feb-21 03:46:34 GMT
+recordUsage Bytes if usage during this period 50600
+5
