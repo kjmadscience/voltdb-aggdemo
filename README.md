@@ -198,4 +198,5 @@ It takes the following parameters:
 |dateis1970Ratio|How often we produce a late record with an unreasonably early timestamp we can’t process. A value of ‘2000’ means that 1 in 2000 records will be for 1-Jan-1970. A value of ‘-1’ disables these records|2000|
 |offset|Number to add to session id’s, which normally start at zero. Used when we want to run multiple copies of the generator at the same time.|0|
 
-java -jar voltdb-aggdemo-client.jar vdb1,vdb2,vdb3 100000 80 1200 -1 -1 -1 -1 0
+An example usage would be:
+````java -jar voltdb-aggdemo-client.jar vdb1,vdb2,vdb3 100000 80 1200 -1 -1 -1 -1 0````
