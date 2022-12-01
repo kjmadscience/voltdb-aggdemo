@@ -116,3 +116,13 @@ The record structure looks like this:
 |recordType|There will be one ‘S’ (Start), more than one ‘I’ (intermediate) and one ‘E’ (end).| S|
 |recordStartUTC| Generation time of record in UTC. |2-Feb-21 03:46:34 GMT|
 |recordUsage| Bytes if usage during this period 50600| 5|
+
+
+|SessionID|SessionStartUTC|callingNumber|Seqno|recordType|recordStartUTC|recordUsage
+|---|---|---|---|---|---|---|
+|456|2-Feb-21 03:46:34 GMT|555-1212|0|S|2-Feb-21 03:46:34 GMT|400|
+||||1 |I |2-Feb-21 03:56:34 GMT |327|
+||||2 |I |2-Feb-21 04:16:34 GMT |0|
+||||3 |I |2-Feb-21 05:16:34 GMT |800|
+||||4 |E |2-Feb-21 05:17:34 GMT |1100|
+
