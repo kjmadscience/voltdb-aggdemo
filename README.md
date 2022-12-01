@@ -111,9 +111,9 @@ The record structure looks like this:
 |---|---|---|
 |SessionId| Unique Id from equipment generating data. Resets when device is restarted after an outage.| 456|
 
-|---|---|---|
+
 |sessionStartUTC|Start time of session in UTC. SessionId + session StartUTC identifies a session. Adding Seqno makes it unique | 2-Feb-21 03:46:34 GMT |
-|---|---|---|
+
 |callingNumber |The user who is doing the work |555-1212|
 |Seqno|An ascending gap free integer between 0 and 255|37|
 |recordType|There will be one ‘S’ (Start), more than one ‘I’ (intermediate) and one ‘E’ (end).| S|
