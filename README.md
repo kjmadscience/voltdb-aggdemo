@@ -185,7 +185,7 @@ generation server.
 It talkes the following parameters:
 
 |Name|Meaning|Example Value|
-|-|-|-|-|
+|-|-|-|
 |hostnames|Which db servers we’re connecting to. Comma delimited. vdb1,vdb2,vdb3|
 |userCount|How many users we have 500000|
 |tpms|How many transactions to attempt each millisecond. 80|
