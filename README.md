@@ -117,6 +117,7 @@ The record structure looks like this:
 |recordStartUTC| Generation time of record in UTC. |2-Feb-21 03:46:34 GMT|
 |recordUsage| Bytes if usage during this period 50600| 5|
 
+So a session with 5 records will look like this:
 
 |SessionID|SessionStartUTC|callingNumber|Seqno|recordType|recordStartUTC|recordUsage
 |---|---|---|---|---|---|---|
@@ -125,4 +126,30 @@ The record structure looks like this:
 ||||2 |I |2-Feb-21 04:16:34 GMT |0|
 ||||3 |I |2-Feb-21 05:16:34 GMT |800|
 ||||4 |E |2-Feb-21 05:17:34 GMT |1100|
+
+When a session’s seqno gets to 255 it will be ended and will then start again. As a consequence, a session
+can run more or less forever.
+
+Unfortunately, we live in an imperfect world and problems occur. Although they are rare, we are processing
+billions of records a day, so 1 in a billion events happen every couple of hours.
+
+# Our Scenario’s Aggregation requirements:
+* We need to be able to support 50,000 records per second.
+* We process all records we receive that are up to 7 days old.
+* Under no circumstances do we process a duplicate record.
+* Under no circumstances do we process a complete session with a missing record. Such sessions are reported.
+* Records or sessions that we hear about that are more than 7 days old are rejected.
+* Event based Aggregation: We cut output records when the session ends or when we’ve seen more than
+* 1,000,000 bytes of usage.
+* Time based Aggregation: We cut output records when we haven’t seen traffic for a while.
+* Duplicates and other malformed records we receive are output to a separate queue.
+
+# HOW WE HANDLE THESE REQUIREMENTS
+* Volt Active Data appears externally as a Kafka cluster.
+* The text client generates CDRs and puts them into the queue. Each of these CDRs is processed by a
+* Volt Active Data stored procedure on arrival.
+* A scheduled task also runs every second to check for sessions that are inactive and need to be processed.
+* The output consists of 2 kafka streams aggregated_cdrs and bad_cdrs.
+* Users can also inspect a session status in real time by calling the stored procedure GetBySessionId.
+
 
