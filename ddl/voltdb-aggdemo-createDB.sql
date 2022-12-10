@@ -1,5 +1,5 @@
 
-LOAD CLASSES ../jars/voltdb-aggdemo.jar;
+LOAD CLASSES voltdb-aggdemo.jar;
 
 file -inlinebatch END_OF_BATCH
 
@@ -49,8 +49,7 @@ FROM cdr_dupcheck;
 
 
 CREATE STREAM bad_cdrs  
-EXPORT TO TOPIC bad_cdrs 
-WITH KEY (sessionId)
+EXPORT TO TARGET bad_cdrs 
 PARTITION ON COLUMN sessionId 
 (	 reason varchar(10) not null,
      sessionId bigint not null,
@@ -67,8 +66,7 @@ PARTITION ON COLUMN sessionId
 
 
 CREATE STREAM unaggregated_cdrs
-EXPORT TO TOPIC unaggregated_cdrs 
-WITH KEY (sessionId) 
+EXPORT TO TARGET unaggregated_cdrs  
 PARTITION ON COLUMN sessionId 
 (	 sessionId bigint not null,
 	 sessionStartUTC timestamp not null,
@@ -98,8 +96,7 @@ CREATE INDEX ucbs_ix1 ON unaggregated_cdrs_by_session
 (min_recordStartUTC, sessionId, sessionStartUTC);
 
 CREATE STREAM aggregated_cdrs 
-EXPORT TO TOPIC aggregated_cdrs 
-WITH KEY (sessionId) 
+EXPORT TO TARGET aggregated_cdrs 
 PARTITION ON COLUMN sessionId
 (	 reason varchar(10) not null,
      sessionId bigint not null,
@@ -136,8 +133,6 @@ PROCEDURE FlushStaleSessions
 ON ERROR LOG 
 RUN ON PARTITIONS;
    
-
---CREATE TOPIC incoming_cdrs EXECUTE PROCEDURE HandleMediationCDR  PROFILE daily;
 
 CREATE PROCEDURE ShowAggStatus__promBL AS
 BEGIN

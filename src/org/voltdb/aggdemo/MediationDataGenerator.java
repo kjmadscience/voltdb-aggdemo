@@ -53,7 +53,7 @@ import org.voltdb.client.topics.VoltDBKafkaPartitioner;
  */
 public class MediationDataGenerator {
 
-	Client voltClient = null;
+//	Client voltClient = null;
 	Producer<Long, MediationMessage> producer = null;
 
 	String hostnames;
@@ -111,8 +111,8 @@ public class MediationDataGenerator {
 		producer = connectToKafka(hostnames, "org.apache.kafka.common.serialization.LongSerializer",
 				"org.voltdb.aggdemo.MediationMessageSerializer");
 
-		msg("Log into VoltDB");
-		voltClient = connectVoltDB(hostnames);
+	//	msg("Log into VoltDB");
+	//	voltClient = connectVoltDB(hostnames);
 
 	}
 
@@ -120,7 +120,8 @@ public class MediationDataGenerator {
 
 		long laststatstime = System.currentTimeMillis();
 		startMs = System.currentTimeMillis();
-		setDupcheckTTLMinutes();
+		//
+		// setDupcheckTTLMinutes();
 
 		long currentMs = System.currentTimeMillis();
 		int tpThisMs = 0;
@@ -210,7 +211,7 @@ public class MediationDataGenerator {
 				laststatstime = System.currentTimeMillis();
 				lastReportedRecordCount = recordCount;
 
-				printApplicationStats(voltClient,nextCdr);
+			//	printApplicationStats(voltClient,nextCdr);
 			}
 
 			
@@ -227,13 +228,13 @@ public class MediationDataGenerator {
 	 * this at the start of each run because users might want to play around with
 	 * the parameter DUPCHECK_TTLMINUTES between runs.
 	 */
-	private void setDupcheckTTLMinutes() {
+/*	private void setDupcheckTTLMinutes() {
 		try {
 
 			// Default is one day
 			long ttlMinutes = 1440;
 
-			// Swee if param is set. If it is, update table DDL...
+			// See if param is set. If it is, update table DDL...
 			ClientResponse cr = voltClient.callProcedure("@AdHoc",
 					"SELECT parameter_value FROM mediation_parameters WHERE parameter_name = 'DUPCHECK_TTLMINUTES';");
 
@@ -250,7 +251,7 @@ public class MediationDataGenerator {
 			msg("Error:" + e1.getMessage());
 		}
 	}
-
+*/
 	/**
 	 * Print general status info
 	 */
@@ -299,7 +300,7 @@ public class MediationDataGenerator {
 					"incoming_cdrs", nextCdr.getSessionId(), nextCdr);
 			producer.send(newRecord, coekc);
 		} else {
-			sendViaVoltDB(nextCdr);
+		//	sendViaVoltDB(nextCdr);
 		}
 
 	}
@@ -309,7 +310,7 @@ public class MediationDataGenerator {
 	 * 
 	 * @param nextCdr
 	 */
-	private void sendViaVoltDB(MediationMessage nextCdr) {
+/*	private void sendViaVoltDB(MediationMessage nextCdr) {
 
 		if (voltClient != null) {
 			try {
@@ -325,7 +326,7 @@ public class MediationDataGenerator {
 		}
 
 	}
-
+*/
 	/**
 	 * @return A random website.
 	 */
@@ -374,7 +375,7 @@ public class MediationDataGenerator {
 	 * @return
 	 * @throws Exception
 	 */
-	private static Client connectVoltDB(String commaDelimitedHostnames) throws Exception {
+/*	private static Client connectVoltDB(String commaDelimitedHostnames) throws Exception {
 		Client client = null;
 		ClientConfig config = null;
 
@@ -408,7 +409,7 @@ public class MediationDataGenerator {
 		return client;
 
 	}
-
+*/
 	/**
 	 * Connect to VoltDB using Kafka APIS
 	 * 
@@ -426,7 +427,7 @@ public class MediationDataGenerator {
 		StringBuffer kafkaBrokers = new StringBuffer();
 		for (int i = 0; i < hostnameArray.length; i++) {
 			kafkaBrokers.append(hostnameArray[i]);
-			kafkaBrokers.append(":9092");
+	//		kafkaBrokers.append(":9092");
 
 			if (i < (hostnameArray.length - 1)) {
 				kafkaBrokers.append(',');
@@ -442,7 +443,7 @@ public class MediationDataGenerator {
 		props.put("buffer.memory", 33554432);
 		props.put("key.serializer", keySerializer);
 		props.put("value.serializer", valueSerializer);
-		props.put(ProducerConfig.PARTITIONER_CLASS_CONFIG, VoltDBKafkaPartitioner.class.getName());
+		// props.put(ProducerConfig.PARTITIONER_CLASS_CONFIG, VoltDBKafkaPartitioner.class.getName());
 
 		Producer<Long, MediationMessage> newProducer = new KafkaProducer<>(props);
 
