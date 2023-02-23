@@ -436,7 +436,7 @@ public class MediationDataGenerator {
 
 		Properties props = new Properties();
 		props.put("bootstrap.servers", kafkaBrokers.toString());
-		props.put("acks", "all");
+		props.put("acks", "1");
 		props.put("retries", 0);
 		props.put("batch.size", 16384);
 		props.put("linger.ms", 1);
