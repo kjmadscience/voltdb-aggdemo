@@ -439,7 +439,7 @@ public class MediationDataGenerator {
 		props.put("acks", "1");
 		props.put("retries", 0);
 		props.put("batch.size", 30000);
-		props.put("linger.ms", 1);
+		props.put("linger.ms", 10);
 		props.put("buffer.memory", 33554432);
 		props.put("key.serializer", keySerializer);
 		props.put("value.serializer", valueSerializer);
